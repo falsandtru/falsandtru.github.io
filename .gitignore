@@ -1,0 +1,11 @@
+# npm
+node_modules
+
+# ruby
+Gemfile.lock
+
+# jekyll
+_site
+
+# adobe
+_notes

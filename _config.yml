@@ -1,0 +1,15 @@
+﻿# Engine
+encoding: UTF-8
+markdown: kramdown
+kramdown:
+  input: GFM
+
+# Plugin
+gems:
+  - jekyll-redirect-from
+
+# Config
+permalink: /:categories/:year/:month/:day/:title
+
+# Param
+title: falsandtru warehouse
