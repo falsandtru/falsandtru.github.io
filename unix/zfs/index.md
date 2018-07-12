@@ -24,9 +24,6 @@ $ sudo dkms install -m spl -v x.x.x
 $ sudo yum remove dkms zfs
 $ sudo yum install dkms zfs
 # カーネルアップデートでエラーになったとき
-$ sudo yum remove spl-dkms zfs-dkms
-$ sudo package-cleanup --oldkernels --count=1
-$ sudo yum install spl-dkms zfs-dkms
 $ dkms status
 $ sudo dkms remove zfs/x.x.x --all
 $ sudo dkms --force install zfs/x.x.x
