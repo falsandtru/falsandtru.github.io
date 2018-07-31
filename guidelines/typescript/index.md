@@ -42,20 +42,17 @@ never型の変数および仮引数宣言への使用を禁止する。
 
 ### `undefined`
 
-undefined変数その他一切の格納されたundefinedの使用を禁止する。
-undefinedは状態を未定義状態に戻す場合にvoid演算子または空により逐次生成する方法によってのみ格納を許可し、値としての使用を禁止する。
+undefined変数その他一切の格納されたundefined値は未定義状態の定義および即時評価以外の使用を禁止する。
 
 - 生成：可能
 - 書込：未定義状態を定義する場合のみ可能
 - 読込：評価のみ可能、外部への搬出不可
 
 ```ts
-function f(n: number): void {
-  n = n || void 0;
-  if (n < 0 || n === void 0) return void g(n);
-  return;
-
-  function g(n: number): void {
+function f(n?: number): void {
+  n = isNaN(n) ? undefined : n;
+  n = n === undefined ? 0 : n;
+  return n;
   }
 }
 ```
@@ -202,6 +199,7 @@ g(NaN);
 ### String literal types as Enums
 
 Enumとしてのストリングリテラルタイプは以下のフォーマットで記述する。
+String Enumでよい場合はそちらを使う。
 
 ```ts
 type Type =
@@ -316,7 +314,7 @@ switch (n) {
 switch文の他の文との混在を非推奨とする。
 if文に置換または関数に切りだすべきものである場合が多い。
 
-### Annotate command calls **[experimental]**
+### Annotation of command calls **[experimental]**
 
 副作用のある命令的関数の呼びだしにvoid演算子を付与して副作用のある命令の発行に注釈をつける。
 コード上に存在する副作用がvoid演算子によりマークアップされ可視化される。
@@ -331,28 +329,17 @@ void fs.pop()();
 
 ### Promise
 
-Promiseの失敗文脈では非同期の例外のみ扱い、回復可能または予測された失敗および例外は多値の成功文脈で表現する。
-失敗文脈は例外のみを扱う例外文脈として設計しなければならない。
+Promiseの失敗文脈では非同期の例外すなわち異常系のみ扱い、既定ないし回復可能な失敗および例外は多値の成功文脈すなわち正常系で扱う。
+失敗文脈は原則として回復不能な例外のみを扱う異常系として設計しなければならない。
 Promiseの失敗文脈は任意の失敗と予期せぬ例外を分離できないため基本的に失敗文脈として使用できない。
 失敗文脈をそれとして使用する場合は絶対に予期せぬ例外が混入しないよう信頼性を高めなければならない。
+このためPromise値を返し失敗文脈を持つ組み込み関数を単に模倣して失敗文脈を持つ関数を作ることは誤りである。
 よって原則として組み込み関数のような最小単位の関数以外で失敗文脈を使用するべきではない。
 
 多値表現にはタプルを使用し最初の要素に成否判定のフラグを入れるフォーマットを推奨する。
 
 ```ts
 new Promise(resolve => resolve([arr.length > 0, arr.pop(), arr]));
-```
-
-### Promise functions **[experimental]**
-
-Promise値を返す関数は例外の発生元が明白である低水準で最小単位の関数および例外発生の通知を必要とする特殊な関数のみに限定する。
-このためPromise値を返し失敗文脈を持つ組み込み関数を単に模倣して失敗文脈を持つ関数を作ることは誤りである。
-Promiseの使用は原則として関数のコードフローの末尾であるべきであり、Promise値の生成後に後処理があるべきではない。
-
-```ts
-function sleep(n: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, n));
-}
 ```
 
 ### async/await
@@ -369,20 +356,6 @@ try {
 }
 catch (err) {
   throw err;
-}
-```
-
-### async/await functions **[experimental]**
-
-Promise同様、await式は原則として関数のコードフローの末尾となり戻り値が直接関数の戻り値となるべきである。
-
-```ts
-function f() {
-  return await g();
-
-  function g() {
-    return Promise.resolve();
-  }
 }
 ```
 
@@ -530,8 +503,7 @@ function f({textContent, innerText}: HTMLElement) {
 関数の戻り値は原則としてプリミティブ型をはじめとするビルトインタイプおよびパラメーターの型のみとする。
 メソッドの戻り値は関数で許可される型および自身の型のみとする。
 void型はこの規則に則った戻り値を返せない場合のデフォルト型とする。
-オブジェクトはデザインパターンやアルゴリズムなど明確な規範に則って設計し、独自のデータ構造の使用は控える。
-レコードなど内部プロトコルとしてのオブジェクトは乱用を控える。
+オブジェクトの戻り値はデータ構造やデザインパターンなど明確な規範に則って設計し、戻したいデータを積み上げただけのオブジェクトを返すことは控える。
 
 ```ts
 function f(): boolean {
@@ -554,7 +526,7 @@ function f(cb: () => void): boolean {
 }
 ```
 
-### Command query segregation
+### Command Query Segregation
 
 コマンドの戻り値は原則として空、個別の実行結果の識別子ないし操作方法のいずれかに限る。
 自身に破壊的変更を加えながら自身を返すメソッドは不適切である。
@@ -605,15 +577,12 @@ function h() {
 ```ts
 function fib(n: number): number {
   switch (n) {
-    case 0: {
+    case 0:
       return 0;
-    }
-    case 1: {
+    case 1:
       return 1;
-    }
-    default: {
+    default:
       return fib(n - 1) + fib(n - 2);
-    }
   }
 }
 ```
@@ -628,15 +597,12 @@ function f(str: string): string
 function f(num: number): string
 function f(p) {
   switch (typeof p) {
-    case 'string': {
+    case 'string':
       return p;
-    }
-    case 'number': {
+    case 'number':
       return p + '';
-    }
-    default: {
+    default:
       throw new TypeError('Invalid type parameter.');
-    }
   }
   assert(false);
 }
@@ -822,6 +788,12 @@ export class App {
 独自の機能やモデルが一般的な抽象モデルによって簡素化されず膨張する場合は抽象化に失敗している可能性がある。
 一般的な抽象モデル以外の部分が100行以下で簡潔に記述されている場合は適切に抽象化されていると言える。
 
+### Data structures and side-effects
+
+副作用のない処理は任意のデータ構造とアルゴリズムに落とし込む。
+副作用のある処理はこれに副作用をパラメータとして注入することでデータ構造を維持かつ副作用をテスト可能にする。
+パラメータとする副作用はそのドメインにおけるその副作用の固有性またはテスト要件により決定する。
+
 ### Design vs Performance
 
 設計を優先する。
@@ -834,5 +806,6 @@ O(nm)も十分に小さければ無視できる。
 
 ## Sample products
 
+- [securemark](https://github.com/falsandtru/securemark)
 - [pjax-api](https://github.com/falsandtru/pjax-api)
 - [clientchannel](https://github.com/falsandtru/clientchannel)
