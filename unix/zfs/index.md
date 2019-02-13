@@ -143,7 +143,7 @@ $ sudo zfs rollback <zsnapshot>
 ## Cleanup
 
 ```
-$ sudo zfs list -r -t snapshot -o name <zfilesystem> | grep <zvolume>@ | head -n -70 | xargs -r -n 1 sudo zfs destroy
+$ sudo zfs list -rH -t snapshot -o name <zfilesystem> | grep <zvolume>@ | head -n -70 | xargs -r -n 1 sudo zfs destroy
 ```
 
 ## Branch
@@ -154,9 +154,11 @@ $ sudo zfs clone <zsnapshot> <zvolume>/branch/snap
 
 ## Backup
 
+First, stop the auto snapshot.
+
 ```
 $ sudo zfs send -R <zsnapshot> | ssh root@localhost zfs recv -v -d <zfilesystem>
-$ sudo zfs send -R -i <zsnapshot> <zsnapshot> | ssh root@localhost zfs recv -v -d <zfilesystem>
+$ sudo zfs send -R -i <zfilesystam or zsnapshot> <zsnapshot> | ssh root@localhost zfs recv -v -d <zfilesystem>
 ```
 
 ```
@@ -165,7 +167,7 @@ $ sudo zfs send -R <zsnapshot> | gzip -c | sudo tee /mnt/backup/<zfilesystem>.sn
 ```
 
 ```
-$ sudo zfs list -r -t snapshot -o name <zfilesystem> | grep @ | tail -n 1 | xargs -n 1 zfs send -R | sudo tee /mnt/backup/<zfilesystem>.zfs.img > /dev/null
+$ sudo zfs list -rH -t snapshot -o name <zfilesystem> | grep @ | tail -n 1 | xargs -n 1 zfs send -R | sudo tee /mnt/backup/<zfilesystem>.zfs.img > /dev/null
 ```
 
 ## Restore
